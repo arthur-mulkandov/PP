@@ -11,9 +11,10 @@ die "\nSyntax: $0 <path>\n\n" if $dir =~ /^\s*$/;
 
 foreach (split("\n",`find $dir -type f`)){
    my $sha1 = `sha1sum $_ \| cut -d\' \' -f1`; chomp $sha1;
-   $SHA1{$sha1} .= "$_ ";
+   $SHA1{$sha1} .= "$_,";
 }
 
 foreach (keys %SHA1){
-  if (scalar (split(" ",$SHA1{$_})) > 1 ){ print "Files $SHA1{$_} are equal\n";} 
+  chop $SHA1{$_};
+  if (scalar (split(",",$SHA1{$_})) > 1 ){ print "Files $SHA1{$_} are equal\n";} 
 }
