@@ -1,0 +1,11 @@
+- hosts: all
+  roles:
+  - Common
+
+- hosts: WebServers
+  roles:
+  - WebServer
+
+- hosts: WebLoadBalancers
+  roles:
+  - LoadBalancer
