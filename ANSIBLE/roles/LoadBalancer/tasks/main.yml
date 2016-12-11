@@ -2,10 +2,10 @@
 - name: install haproxy
   apt: name=haproxy
 
+- name: Copy proxy config 
+  copy: src=haproxy.cfg dest=/etc/haproxy/haproxy.cfg owner=root group=root mode="u=rw,g=r,o=r"
+
 - name: restart haproxy
   notify:
     - restart haproxy
-
-- name: Copy proxy config 
-  copy: src=index.html dest=/etc/apache2/httpd/index.html owner=root group=root mode="u=rw,g=r,o=r"
 
