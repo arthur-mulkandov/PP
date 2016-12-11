@@ -1,0 +1,12 @@
+---
+- name: install apache2
+  apt: name=apache2 update_cache=yes state=latest
+
+- name: enabled mod_rewrite
+  apache2_module: name=rewrite state=present
+  notify:
+    - restart apache2
+
+- name: Copy /etc/apache2/httpd/index.html 
+  copy: src=index.html dest=/etc/apache2/httpd/index.html owner=root group=root mode="u=rw,g=r,o=r"
+
