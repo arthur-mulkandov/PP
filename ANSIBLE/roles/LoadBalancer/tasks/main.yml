@@ -1,11 +1,12 @@
 ---
 - name: install haproxy
-  apt: name=haproxy
+  yum: name=haproxy
 
 - name: Copy proxy config 
   copy: src=haproxy.cfg dest=/etc/haproxy/haproxy.cfg owner=root group=root mode="u=rw,g=r,o=r"
 
 - name: restart haproxy
-  notify:
-    - restart haproxy
+  service:
+    name: haproxy
+    status: started
 
