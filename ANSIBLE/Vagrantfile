@@ -1,0 +1,52 @@
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.require_version ">= 1.7.2"
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+# Every Vagrant virtual environment requires a box to build off of.
+config.vm.define "web1" do |web1|
+    web1.vm.box = "centos-6.6-x86_64.box"
+    web1.vm.box_url = "https://github.com/tommy-muehle/puppet-vagrant-boxes/releases/download/1.0.0/centos-6.6-x86_64.box"
+    web1.vm.hostname = "web1"
+    web1.vm.network :private_network, ip: "192.168.0.42",nic_type: "virtio",virtualbox__intnet: true
+  	web1.vm.provider :virtualbox do |vb|
+    vb.customize [
+        "modifyvm", :id,
+        "--cpuexecutioncap", "50",
+        "--memory", "256",
+    ]
+		end
+		
+end
+
+config.vm.define "web2" do |web2|
+    web2.vm.box = "centos-6.6-x86_64.box"
+    web2.vm.box_url = "https://github.com/tommy-muehle/puppet-vagrant-boxes/releases/download/1.0.0/centos-6.6-x86_64.box"  	
+    web2.vm.hostname = "web2"
+    web2.vm.network :private_network, ip: "192.168.0.43",nic_type: "virtio",virtualbox__intnet: true
+    web2.vm.provider :virtualbox do |vb2|
+    vb2.customize [
+        "modifyvm", :id,
+        "--cpuexecutioncap", "50",
+        "--memory", "256",
+    ]
+  end
+end
+
+config.vm.define "lb1" do |lb1|
+    lb1.vm.box = "centos-6.6-x86_64.box"
+    lb1.vm.box_url = "https://github.com/tommy-muehle/puppet-vagrant-boxes/releases/download/1.0.0/centos-6.6-x86_64.box"  	
+    lb1.vm.hostname = "web2"
+    lb1.vm.network :private_network, ip: "192.168.0.44",nic_type: "virtio",virtualbox__intnet: true
+    lb1.vm.provider :virtualbox do |vb3|
+    vb3.customize [
+        "modifyvm", :id,
+        "--cpuexecutioncap", "50",
+        "--memory", "256",
+				
+    ]
+  end
+	lb1.vm.provision "shell", inline: "sudo yum install -y ansible"
+end
+
+end
