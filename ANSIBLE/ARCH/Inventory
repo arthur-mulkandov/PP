@@ -1,0 +1,10 @@
+[all:vars]
+ansible_ssh_user=vagrant
+ansible_ssh_pass=vagrant
+
+[WebServers]
+192.168.0.42
+#192.168.0.43
+
+[WebLoadBalancers]
+192.168.0.44

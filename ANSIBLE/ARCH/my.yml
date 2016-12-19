@@ -1,0 +1,11 @@
+- hosts: WebServers
+  become: yes
+  #gather_facts: no 
+  roles:
+  - WebServer
+
+- hosts: WebLoadBalancers
+  become: yes
+  #gather_facts: no
+  roles:
+  - LoadBalancer

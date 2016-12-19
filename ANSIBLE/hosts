@@ -1,0 +1,6 @@
+[lb]
+lb.box    ansible_host=192.168.0.42    ansible_user=vagrant        ansible_password=vagrant
+
+[web]
+web1.box    ansible_host=192.168.0.43    ansible_user=vagrant        ansible_password=vagrant
+web2.box    ansible_host=192.168.0.44    ansible_user=vagrant        ansible_password=vagrant

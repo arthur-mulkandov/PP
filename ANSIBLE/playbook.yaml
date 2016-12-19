@@ -1,0 +1,38 @@
+- hosts: all
+  tasks:
+    - debug: msg="hello world from"
+
+- hosts: lb
+  become: yes
+  tasks:
+     - name: "Install lb"
+       apt: name=haproxy
+
+     - name: "Copy config"
+       copy: src=/vagrant/haproxy.cfg dest=/etc/haproxy/haproxy.cfg owner=root group=root mode="u=rw,g=r,o=r"
+
+     - lineinfile:
+          dest: /etc/default/haproxy
+          regexp: "^ENABLED="
+          line: "ENABLED=1"
+
+     - name: "restart haproxy"
+       service:
+          name: haproxy
+          state: started
+
+- hosts: web
+  become: yes
+  become_method: sudo
+  tasks:
+    - apt: update_cache=yes
+    - name: "httpd install"
+      apt: name=apache2 state=latest
+    - template:
+         src: /vagrant/index.html.j2
+         dest: /var/www/html/index.html
+         owner: root
+         group: root
+         mode: 0644
+
+ 

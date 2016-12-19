@@ -1,63 +1,72 @@
-VAGRANTFILE_API_VERSION = "2"
 
-Vagrant.require_version ">= 1.7.2"
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+dabox = 'ubuntu/trusty64'
 
-### Every Vagrant virtual environment requires a box to build off of.
-config.vm.define "web1" do |web1|
-    web1.vm.box = "centos-6.6-x86_64.box"
-    web1.vm.box_url = "https://github.com/tommy-muehle/puppet-vagrant-boxes/releases/download/1.0.0/centos-6.6-x86_64.box"
-    web1.vm.hostname = "web1"
-#    web1.vm.network :private_network, ip: "192.168.0.42",nic_type: "virtio",virtualbox__intnet: true
-    web1.vm.network :private_network, ip: "192.168.0.42", virtualbox__intnet: true
-  	web1.vm.provider :virtualbox do |vb|
-    vb.customize [
-        "modifyvm", :id,
-        "--cpuexecutioncap", "50",
-        "--memory", "256",
-    ]
-		end
-	  web1.vm.provision "shell", inline: "sudo sh -c \"echo -n 'proxy=http://16.82.112.11:8080' >> /etc/yum.conf\""
-	  web1.vm.provision "shell", inline: "sudo yum install -y epel-release"
-		
-		
+provisioner_name = "god"
+provisioner_ip = '192.168.0.41'
+$httpProxy = "http://16.82.112.11:8080"
+
+nodes = [
+  { :hostname => 'lb',     :ip => '192.168.0.42', :box => dabox },
+  { :hostname => 'web1',   :ip => '192.168.0.43', :box => dabox },
+  { :hostname => 'web2',   :ip => '192.168.0.44', :box => dabox },
+]
+
+def provisionNode(node, hostname, ip, box)
+      node.vm.box = box
+      node.vm.hostname = hostname + ".box"
+      node.vm.network :private_network, ip: ip
+
+      memory =  256;
+      node.vm.provider :virtualbox do |vb|
+        vb.customize [
+          "modifyvm", :id,
+          "--cpuexecutioncap", "50",
+          "--memory", memory.to_s,
+        ]
+      end
+	  if Vagrant.has_plugin?("vagrant-proxyconf")
+		node.proxy.http     = $httpProxy
+		node.proxy.https    = $httpProxy
+		node.proxy.no_proxy = "localhost,127.0.0.1,.hpeswlab.net,.box,192.168.0.42,192.168.0.43,192.168.0.44"
+	  end
+	  
 end
 
-config.vm.define "web2" do |web2|
-    web2.vm.box = "centos-6.6-x86_64.box"
-    web2.vm.box_url = "https://github.com/tommy-muehle/puppet-vagrant-boxes/releases/download/1.0.0/centos-6.6-x86_64.box"  	
-    web2.vm.hostname = "web2"
-    web2.vm.network :private_network, ip: "192.168.0.43", virtualbox__intnet: true
-    web2.vm.provider :virtualbox do |vb2|
-    vb2.customize [
-        "modifyvm", :id,
-        "--cpuexecutioncap", "50",
-        "--memory", "256",
-    ]
+
+## Make inventory file (checking how it works)
+#File.open('hosts','w') do |f|
+#	f.puts "[all]"
+#	nodes.each do |node|
+#		line = "#{node[:hostname]}.box    ansible_host=#{node[:ip]}    ansible_user=vagrant        #ansible_password=vagrant"
+#		f.puts line
+#	end # machines.each
+#end
+
+Vagrant.configure("2") do |config|
+  nodes.each do |node|
+    config.vm.define node[:hostname] do |nodeconfig|
+	  provisionNode(nodeconfig, node[:hostname] + ".box", node[:ip], node[:box] )
+    end
   end
-	web2.vm.provision "shell", inline: "sudo sh -c \"echo -n 'proxy=http://16.82.112.11:8080' >> /etc/yum.conf\""
-	web2.vm.provision "shell", inline: "sudo yum install -y epel-release"
 
-end
+  config.vm.define provisioner_name do |nodeconfig|
+    provisionNode(nodeconfig, provisioner_name + ".box", provisioner_ip, dabox )
 
-config.vm.define "lb1" do |lb1|
-    lb1.vm.box = "centos-6.6-x86_64.box"
-    lb1.vm.box_url = "https://github.com/tommy-muehle/puppet-vagrant-boxes/releases/download/1.0.0/centos-6.6-x86_64.box"  	
-    lb1.vm.hostname = "lb1ip"
-    lb1.vm.network :private_network, ip: "192.168.0.44", virtualbox__intnet: true
-    lb1.vm.provider :virtualbox do |vb3|
-    vb3.customize [
-        "modifyvm", :id,
-        "--cpuexecutioncap", "50",
-        "--memory", "256",
-				
-    ]
+	nodeconfig.vm.provision "shell", inline: "sudo sh -c \"echo -n 'Acquire::http::Proxy \\\"http://16.82.112.11:8080\\\";' >> /etc/apt/apt.conf\""
+
+	nodeconfig.vm.provision "shell", inline: "sudo add-apt-repository ppa:ansible/ansible -y; sudo apt-get update; sudo apt-get install ansible -y"
+
+	nodeconfig.vm.provision "shell", inline: "pushd /vagrant; ansible-playbook playbook.yaml -i hosts"
+	
+#    nodeconfig.vm.provision :ansible_local do |ansible|
+#	  ansible.playbook       = "playbook.yaml"
+#	  ansible.verbose        = true
+#	  ansible.install        = true
+#	  ansible.limit          = "all" # or only "nodes" group, etc.
+#	  ansible.inventory_path = "hosts"
+ #   end
   end
-	lb1.vm.provision "shell", inline: "sudo sh -c \"echo -n 'proxy=http://16.82.112.11:8080' >> /etc/yum.conf\""
-	lb1.vm.provision "shell", inline: "sudo yum install -y epel-release"
-	lb1.vm.provision "shell", inline: "sudo yum install -y ansible"
-	lb1.vm.synced_folder "C:/ANSIBLE", "/ansible", create: true, disabled: false
-	lb1.vm.provision "shell", inline: "sudo yum install -y ansible"
 end
 
-end
+  
+  
