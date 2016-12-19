@@ -1,6 +1,0 @@
-[WebServers]
-web1
-web2
-
-[WebLoadBalancers]
-lb1
